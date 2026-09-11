@@ -1,0 +1,19 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Installed dependencies
+node_modules/
+
+# Runtime-generated files
+upload/*
+reports/*
+!upload/.gitkeep
+!reports/.gitkeep
+
+# Logs and local OS/editor files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
