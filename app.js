@@ -6,6 +6,7 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const fsPromises = fs.promises;
 const path = require("path");
+const sharp = require("sharp");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
@@ -75,7 +76,7 @@ app.post(
 
       // Gemini model
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-3.8-flash",
       });
 
       // Analyze image
@@ -139,220 +140,215 @@ app.post(
 // DOWNLOAD PDF
 // ==========================================
 
-app.post(
-  "/download",
-  async (req, res) => {
-    const { result, image } = req.body;
+app.post("/download", async (req, res) => {
+  const { result, image } = req.body;
 
-    try {
-      // Check analysis result
-      if (!result) {
-        return res.status(400).json({
-          error: "No analysis result available",
-        });
-      }
+  try {
+    if (!result) {
+      return res.status(400).json({
+        error: "No analysis result available",
+      });
+    }
 
-      // ==========================================
-      // CREATE TEMPORARY REPORT DIRECTORY
-      // ==========================================
+    const reportsDir = "/tmp/reports";
 
-      const reportsDir = "/tmp/reports";
+    await fsPromises.mkdir(reportsDir, {
+      recursive: true,
+    });
 
-      await fsPromises.mkdir(
-        reportsDir,
-        {
-          recursive: true,
+    const filename = `plant_analysis_report_${Date.now()}.pdf`;
+    const filePath = path.join(reportsDir, filename);
+
+    const writeStream = fs.createWriteStream(filePath);
+
+    const doc = new PDFDocument({
+      margin: 50,
+    });
+
+    doc.pipe(writeStream);
+
+    // =========================
+    // TITLE
+    // =========================
+
+    doc.fontSize(24).text("Plant Analysis Report", {
+      align: "center",
+    });
+
+    doc.moveDown();
+
+    doc.fontSize(12).text(
+      `Date: ${new Date().toLocaleDateString()}`
+    );
+
+    doc.moveDown(2);
+
+    // =========================
+    // ANALYSIS
+    // =========================
+
+    doc.fontSize(14).text(result, {
+      align: "left",
+      lineGap: 5,
+    });
+
+    // =========================
+    // PLANT IMAGE
+    // =========================
+
+    if (image) {
+      try {
+        console.log("Processing plant image...");
+
+        // Check data URL
+        if (!image.startsWith("data:image/")) {
+          throw new Error("Invalid image data URL");
         }
-      );
 
-      // ==========================================
-      // GENERATE PDF FILE NAME
-      // ==========================================
+        // Extract base64 image
+        const base64Data = image.split(",")[1];
 
-      const filename =
-        `plant_analysis_report_${Date.now()}.pdf`;
+        if (!base64Data) {
+          throw new Error("Base64 image data is missing");
+        }
 
-      const filePath = path.join(
-        reportsDir,
-        filename
-      );
+        const imageBuffer = Buffer.from(
+          base64Data,
+          "base64"
+        );
 
-      // ==========================================
-      // CREATE PDF
-      // ==========================================
+        console.log(
+          "Original image size:",
+          imageBuffer.length,
+          "bytes"
+        );
 
-      const writeStream =
-        fs.createWriteStream(filePath);
+        // Convert ANY supported image format to PNG
+        const pngBuffer = await sharp(imageBuffer)
+          .rotate()
+          .png()
+          .toBuffer();
 
-      const doc = new PDFDocument();
+        console.log(
+          "PNG conversion successful:",
+          pngBuffer.length,
+          "bytes"
+        );
 
-      doc.pipe(writeStream);
+        // New page for image
+        doc.addPage();
 
-      // ==========================================
-      // PDF TITLE
-      // ==========================================
-
-      doc
-        .fontSize(24)
-        .text("Plant Analysis Report", {
+        doc.fontSize(20).text("Plant Image", {
           align: "center",
         });
 
-      doc.moveDown();
+        doc.moveDown(2);
 
-      // ==========================================
-      // DATE
-      // ==========================================
+        // Add image
+        doc.image(pngBuffer, {
+          fit: [450, 500],
+          align: "center",
+          valign: "center",
+        });
 
-      doc
-        .fontSize(14)
-        .text(
-          `Date: ${new Date().toLocaleDateString()}`
+        console.log(
+          "Plant image successfully added to PDF"
         );
 
-      doc.moveDown();
+      } catch (imageError) {
+        console.error(
+          "PLANT IMAGE ERROR:",
+          imageError
+        );
 
-      // ==========================================
-      // ANALYSIS RESULT
-      // ==========================================
+        doc.addPage();
 
-      doc
-        .fontSize(14)
-        .text(result, {
-          align: "left",
-        });
-
-      // ==========================================
-      // ADD PLANT IMAGE
-      // ==========================================
-
-      if (image) {
-        try {
-          const base64Data =
-            image.replace(
-              /^data:image\/\w+;base64,/,
-              ""
-            );
-
-          const buffer = Buffer.from(
-            base64Data,
-            "base64"
-          );
-
-          doc.moveDown();
-
-          doc
-            .fontSize(18)
-            .text("Plant Image", {
-              align: "center",
-            });
-
-          doc.moveDown();
-
-          doc.image(buffer, {
-            fit: [500, 300],
+        doc.fontSize(16).text(
+          "Plant Image",
+          {
             align: "center",
-            valign: "center",
-          });
-
-        } catch (imageError) {
-          console.error(
-            "Error adding image to PDF:",
-            imageError
-          );
-
-          doc.moveDown();
-
-          doc
-            .fontSize(12)
-            .text(
-              "Plant image could not be added to the report.",
-              {
-                align: "center",
-              }
-            );
-        }
-      }
-
-      // ==========================================
-      // FINISH PDF
-      // ==========================================
-
-      doc.end();
-
-      // Wait for PDF creation
-      await new Promise(
-        (resolve, reject) => {
-          writeStream.on(
-            "finish",
-            resolve
-          );
-
-          writeStream.on(
-            "error",
-            reject
-          );
-        }
-      );
-
-      // ==========================================
-      // DOWNLOAD PDF
-      // ==========================================
-
-      res.download(
-        filePath,
-        "Plant_Analysis_Report.pdf",
-        async (err) => {
-          if (err) {
-            console.error(
-              "Error downloading PDF:",
-              err
-            );
-
-            if (!res.headersSent) {
-              res.status(500).json({
-                error:
-                  "Error downloading the PDF report",
-              });
-            }
-
-            return;
           }
+        );
 
-          // Delete temporary PDF
-          try {
-            await fsPromises.unlink(
-              filePath
-            );
+        doc.moveDown(2);
 
-            console.log(
-              "Temporary PDF deleted"
-            );
-
-          } catch (deleteError) {
-            console.error(
-              "Error deleting PDF:",
-              deleteError
-            );
+        doc.fontSize(12).text(
+          "Unable to add the plant image to this report.",
+          {
+            align: "center",
           }
-        }
-      );
-
-    } catch (error) {
-      console.error(
-        "Error generating PDF report:",
-        error
-      );
-
-      if (!res.headersSent) {
-        res.status(500).json({
-          error:
-            "An error occurred while generating the PDF report",
-        });
+        );
       }
     }
+
+    // Finish PDF
+    doc.end();
+
+    // Wait for PDF creation
+    await new Promise((resolve, reject) => {
+      writeStream.on("finish", resolve);
+      writeStream.on("error", reject);
+    });
+
+    console.log(
+      "PDF created successfully:",
+      filePath
+    );
+
+    // Download PDF
+    res.download(
+      filePath,
+      "Plant_Analysis_Report.pdf",
+      async (err) => {
+        if (err) {
+          console.error(
+            "PDF download error:",
+            err
+          );
+
+          if (!res.headersSent) {
+            res.status(500).json({
+              error: "Error downloading PDF",
+            });
+          }
+
+          return;
+        }
+
+        console.log(
+          "PDF downloaded successfully"
+        );
+
+        // Delete temporary PDF
+        try {
+          await fsPromises.unlink(filePath);
+
+          console.log(
+            "Temporary PDF deleted"
+          );
+        } catch (deleteError) {
+          console.error(
+            "Error deleting PDF:",
+            deleteError
+          );
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error(
+      "PDF generation error:",
+      error
+    );
+
+    if (!res.headersSent) {
+      res.status(500).json({
+        error:
+          "An error occurred while generating the PDF",
+      });
+    }
   }
-);
+});
 
 // ==========================================
 // HEALTH CHECK
