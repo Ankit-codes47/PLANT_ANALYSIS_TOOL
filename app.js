@@ -3,20 +3,26 @@ require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const PDFDocument = require("pdfkit");
+const fs = require("fs");
 const fsPromises = require("fs").promises;
 const os = require("os");
 const path = require("path");
-const { GoogleGenAI } = require("@google/genai");
+const sharp = require("sharp");
+const { GoogleGenAI, ThinkingLevel } = require("@google/genai");
 
 const app = express();
 const port = process.env.PORT || 5000;
+const temporaryUploadDirectory = path.join(os.tmpdir(), "plant-scans");
+const geminiTimeoutMs = 25_000;
 
 // ==========================================
 // CONFIGURATION
 // ==========================================
 
+fs.mkdirSync(temporaryUploadDirectory, { recursive: true });
+
 const upload = multer({
-  dest: os.tmpdir(),
+  dest: temporaryUploadDirectory,
 });
 
 app.use(express.json({ limit: "10mb" }));
@@ -35,142 +41,153 @@ app.use(express.static(path.join(__dirname, "public")));
 // ANALYZE PLANT
 // ==========================================
 
-app.post("/analyze", upload.single("image"), async (req, res) => {
-  let imagePath = null;
-
-  try {
-    // Check image
-    if (!req.file) {
-      return res.status(400).json({
-        error: "No image file uploaded",
-      });
-    }
-
-    imagePath = req.file.path;
-
-    if (!process.env.GEMINI_API_KEY) {
-      console.error("ERROR ANALYZING PLANT: GEMINI_API_KEY is not configured.");
-      await fsPromises.unlink(imagePath).catch((cleanupError) => {
-        console.error("Could not remove temporary upload:", cleanupError);
-      });
-      imagePath = null;
-      return res.status(500).json({
-        error: "The analysis service is not configured on the server.",
-      });
-    }
-
-    // Read uploaded image
-    const imageData = await fsPromises.readFile(imagePath, {
-      encoding: "base64",
+app.post(
+  "/analyze",
+  (req, res, next) => {
+    console.log("Request received");
+    next();
+  },
+  (req, res, next) => {
+    upload.single("image")(req, res, (error) => {
+      if (error) {
+        console.error("PLANTSCAN ANALYZE ERROR:", error);
+        return res.status(500).json({
+          error: "Plant analysis failed",
+          details: error.message || "Upload failed",
+        });
+      }
+      next();
     });
+  },
+  async (req, res) => {
+    let imagePath = null;
 
-    // ==========================================
-    // GEMINI ANALYSIS
-    // ==========================================
+    try {
+      console.log("ANALYZE START");
 
-    const genAI = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    });
+      if (!req.file) {
+        return res.status(400).json({
+          error: "No image file uploaded",
+        });
+      }
 
-    const result = await genAI.models.generateContent({
-      model: "gemini-3.8-flash",
+      imagePath = req.file.path;
+      console.log("Image:", req.file.originalname);
+      console.log("Image size:", req.file.size);
+      console.log("Image MIME:", req.file.mimetype);
+      console.log("File uploaded");
 
-      config: {
-        thinkingConfig: {
-          thinkingLevel: "low",
-        },
-      },
+      if (!/^image\/(jpeg|png|webp)$/.test(req.file.mimetype)) {
+        throw new Error(`Unsupported image MIME type: ${req.file.mimetype}`);
+      }
 
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `
-Analyze this plant image carefully.
+      if (!process.env.GEMINI_API_KEY) {
+        throw new Error("GEMINI_API_KEY is missing");
+      }
 
-Provide a detailed plant analysis containing:
+      await fsPromises.access(imagePath, fs.constants.R_OK);
+      console.log("Reading image...");
+      const originalImageBuffer = await fsPromises.readFile(imagePath);
+      const imageData = originalImageBuffer.toString("base64");
 
-1. Plant Species / Identification
-2. Plant Health
-3. Physical Characteristics
-4. Care Instructions
-5. Watering Requirements
-6. Sunlight Requirements
-7. Soil Requirements
-8. Temperature and Humidity
-9. Common Problems or Diseases
-10. Recommendations
-11. Interesting Facts
+      const imageMetadata = await sharp(originalImageBuffer).metadata();
+      const needsOptimization =
+        (imageMetadata.width && imageMetadata.width > 1200) ||
+        (imageMetadata.height && imageMetadata.height > 1200) ||
+        originalImageBuffer.length > 1_500_000;
+      const geminiImageBuffer = needsOptimization
+        ? await sharp(originalImageBuffer)
+            .resize({
+              width: 1200,
+              height: 1200,
+              fit: "inside",
+              withoutEnlargement: true,
+            })
+            .jpeg({ quality: 82 })
+            .toBuffer()
+        : originalImageBuffer;
+      const geminiImageData = geminiImageBuffer.toString("base64");
+      const geminiMimeType = needsOptimization
+        ? "image/jpeg"
+        : req.file.mimetype;
 
-Important instructions:
+      const genAI = new GoogleGenAI({
+        apiKey: process.env.GEMINI_API_KEY,
+      });
 
-- Base the analysis only on what can reasonably be observed or inferred from the image.
-- If exact species identification is uncertain, clearly mention that it is an identification estimate.
-- Do not claim 100% identification accuracy.
-- Do not invent visible symptoms.
-- Give practical and understandable care recommendations.
-- Mention uncertainty when appropriate.
-- Return plain text only.
-- Do not use Markdown.
-- Do not use emojis.
-      `,
+      console.log("Sending request to Gemini...");
+      let timeoutHandle;
+      const result = await Promise.race([
+        genAI.models.generateContent({
+          model: "gemini-3.8-flash",
+          config: {
+            thinkingConfig: {
+              thinkingLevel: ThinkingLevel.LOW,
             },
-
+            maxOutputTokens: 1200,
+          },
+          contents: [
             {
-              inlineData: {
-                mimeType: req.file.mimetype,
-                data: imageData,
-              },
+              role: "user",
+              parts: [
+                {
+                  text: "Analyze this plant image. Identify the likely plant species, visible health condition, important characteristics, care instructions, and interesting facts. Give a concise practical response in plain text. If the species cannot be identified confidently, clearly say so.",
+                },
+                {
+                  inlineData: {
+                    mimeType: geminiMimeType,
+                    data: geminiImageData,
+                  },
+                },
+              ],
             },
           ],
-        },
-      ],
-    });
+        }),
+        new Promise((_, reject) => {
+          timeoutHandle = setTimeout(() => {
+            reject(new Error(`Gemini request timed out after ${geminiTimeoutMs}ms`));
+          }, geminiTimeoutMs);
+        }),
+      ]).finally(() => clearTimeout(timeoutHandle));
+      console.log("Gemini response received");
 
-    // Get AI response
-    const plantInfo = result.text;
+      const plantInfo = result.text;
 
-    if (!plantInfo || !plantInfo.trim()) {
-      throw new Error("Gemini returned an empty response.");
-    }
+      if (!plantInfo || !plantInfo.trim()) {
+        throw new Error("Gemini returned an empty response.");
+      }
 
-    // ==========================================
-    // DELETE TEMPORARY UPLOAD
-    // ==========================================
-
-    await fsPromises.unlink(imagePath);
-    imagePath = null;
-
-    // ==========================================
-    // SEND RESPONSE TO FRONTEND
-    // ==========================================
-
-    res.json({
-      result: plantInfo,
-      image: `data:${req.file.mimetype};base64,${imageData}`,
-    });
-  } catch (error) {
-    console.error("=================================");
-    console.error("ERROR ANALYZING PLANT");
-    console.error("=================================");
-    console.error(error);
-    console.error("=================================");
-
-    // Try to remove temporary uploaded file
-    if (imagePath) {
-      try {
-        await fsPromises.unlink(imagePath);
-      } catch (cleanupError) {
-        console.error("Could not remove temporary file:", cleanupError);
+      console.log("Sending response to frontend");
+      res.json({
+        result: plantInfo,
+        image: `data:${req.file.mimetype};base64,${imageData}`,
+      });
+      console.log("ANALYZE COMPLETE");
+    } catch (error) {
+      console.error("GEMINI ERROR:", error);
+      console.error(error?.message);
+      console.error(error?.stack);
+      console.error("=================================");
+      console.error("PLANTSCAN ANALYZE ERROR");
+      console.error("=================================");
+      console.error(error);
+      console.error(error?.message);
+      console.error(error?.stack);
+      res.status(500).json({
+        error: "Plant analysis failed",
+        details: error.message || "Unknown server error",
+      });
+    } finally {
+      if (imagePath) {
+        try {
+          await fsPromises.unlink(imagePath);
+        } catch (cleanupError) {
+          console.error("Could not remove temporary upload:", cleanupError);
+        }
       }
     }
-
-    res.status(500).json({
-      error: "An error occurred while analyzing the image.",
-    });
   }
-});
+);
 
 // ==========================================
 // DOWNLOAD PDF REPORT

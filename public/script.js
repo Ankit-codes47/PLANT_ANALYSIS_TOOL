@@ -311,20 +311,29 @@
       try {
         data = await response.json();
       } catch {
-        throw new Error("Invalid server response");
+        throw new Error(`Server returned HTTP ${response.status}`);
       }
 
-      if (data.result) {
-        analysisResult = data.result;
-        analysisImage = data.image || "";
-        showResultState();
-      } else if (data.error) {
-        showError("Something went wrong", "We couldn't analyze this image. Please try again with another clear plant photo.");
-      } else {
-        showError("Something went wrong", "We received an unexpected response. Please try again.");
+      if (!response.ok) {
+        console.error("ANALYZE API ERROR:", data);
+        throw new Error(
+          data.details ||
+          data.error ||
+          `Analysis failed with HTTP ${response.status}`
+        );
       }
-    } catch {
-      showError("Connection error", "We couldn't reach the analysis service. Please check your connection and try again.");
+
+      if (!data.result) {
+        throw new Error("Analysis response did not include a result.");
+      }
+
+      console.log("ANALYZE SUCCESS:", data);
+      analysisResult = data.result;
+      analysisImage = data.image || "";
+      showResultState();
+    } catch (error) {
+      console.error("FULL ANALYZE ERROR:", error);
+      showError("Something went wrong", error.message || "Unknown analysis error");
     } finally {
       isAnalyzing = false;
       analyzeBtn.disabled = false;
