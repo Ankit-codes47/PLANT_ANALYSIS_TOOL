@@ -3,8 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const PDFDocument = require("pdfkit");
-const fs = require("fs");
-const fsPromises = fs.promises;
+const fsPromises = require("fs").promises;
+const os = require("os");
 const path = require("path");
 const { GoogleGenAI } = require("@google/genai");
 
@@ -16,7 +16,7 @@ const port = process.env.PORT || 5000;
 // ==========================================
 
 const upload = multer({
-  dest: "upload/",
+  dest: os.tmpdir(),
 });
 
 app.use(express.json({ limit: "10mb" }));
@@ -25,19 +25,11 @@ app.use(express.json({ limit: "10mb" }));
 // GEMINI AI
 // ==========================================
 
-if (!process.env.GEMINI_API_KEY) {
-  console.error("ERROR: GEMINI_API_KEY is not configured in .env");
-}
-
-const genAI = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
-
 // ==========================================
 // STATIC FRONTEND
 // ==========================================
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 // ==========================================
 // ANALYZE PLANT
@@ -56,6 +48,17 @@ app.post("/analyze", upload.single("image"), async (req, res) => {
 
     imagePath = req.file.path;
 
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("ERROR ANALYZING PLANT: GEMINI_API_KEY is not configured.");
+      await fsPromises.unlink(imagePath).catch((cleanupError) => {
+        console.error("Could not remove temporary upload:", cleanupError);
+      });
+      imagePath = null;
+      return res.status(500).json({
+        error: "The analysis service is not configured on the server.",
+      });
+    }
+
     // Read uploaded image
     const imageData = await fsPromises.readFile(imagePath, {
       encoding: "base64",
@@ -64,6 +67,10 @@ app.post("/analyze", upload.single("image"), async (req, res) => {
     // ==========================================
     // GEMINI ANALYSIS
     // ==========================================
+
+    const genAI = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
 
     const result = await genAI.models.generateContent({
       model: "gemini-3.8-flash",
@@ -180,30 +187,19 @@ app.post("/download", async (req, res) => {
     }
 
     // ==========================================
-    // REPORT DIRECTORY
-    // ==========================================
-
-    const reportsDir = path.join(__dirname, "reports");
-
-    await fsPromises.mkdir(reportsDir, {
-      recursive: true,
-    });
-
-    // ==========================================
     // PDF FILE
     // ==========================================
-
-    const filename = `plant_analysis_report_${Date.now()}.pdf`;
-
-    const filePath = path.join(reportsDir, filename);
-
-    const writeStream = fs.createWriteStream(filePath);
 
     const doc = new PDFDocument({
       margin: 50,
     });
 
-    doc.pipe(writeStream);
+    const pdfChunks = [];
+    const pdfBufferPromise = new Promise((resolve, reject) => {
+      doc.on("data", (chunk) => pdfChunks.push(chunk));
+      doc.on("end", () => resolve(Buffer.concat(pdfChunks)));
+      doc.on("error", reject);
+    });
 
     // ==========================================
     // PDF HEADER
@@ -294,36 +290,19 @@ app.post("/download", async (req, res) => {
     // WAIT FOR PDF
     // ==========================================
 
-    await new Promise((resolve, reject) => {
-      writeStream.on("finish", resolve);
-      writeStream.on("error", reject);
-    });
+    const pdfBuffer = await pdfBufferPromise;
 
     // ==========================================
     // DOWNLOAD PDF
     // ==========================================
 
-    res.download(filePath, filename, async (err) => {
-      if (err) {
-        console.error("PDF download error:", err);
-
-        if (!res.headersSent) {
-          res.status(500).json({
-            error: "Error downloading the PDF report",
-          });
-        }
-      }
-
-      // Delete temporary PDF
-      try {
-        await fsPromises.unlink(filePath);
-      } catch (deleteError) {
-        console.error(
-          "Could not delete temporary PDF:",
-          deleteError
-        );
-      }
+    const filename = `plant_analysis_report_${Date.now()}.pdf`;
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Length": pdfBuffer.length,
     });
+    res.send(pdfBuffer);
   } catch (error) {
     console.error("=================================");
     console.error("ERROR GENERATING PDF");
@@ -338,13 +317,17 @@ app.post("/download", async (req, res) => {
 });
 
 // ==========================================
-// START SERVER
+// START SERVER LOCALLY
 // ==========================================
 
-app.listen(port, () => {
-  console.log("=================================");
-  console.log(`PlantScan server running on port ${port}`);
-  console.log(`http://localhost:${port}`);
-  console.log("Gemini model: gemini-3.8-flash");
-  console.log("=================================");
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log("=================================");
+    console.log(`PlantScan server running on port ${port}`);
+    console.log(`http://localhost:${port}`);
+    console.log("Gemini model: gemini-3.8-flash");
+    console.log("=================================");
+  });
+}
+
+module.exports = app;
