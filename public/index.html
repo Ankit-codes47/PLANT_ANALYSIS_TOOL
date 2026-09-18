@@ -1,2530 +1,566 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>PlantScan | Advanced Plant Analysis Tool</title>
-
-  <!-- Font Awesome -->
-  <link
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-    rel="stylesheet"
-  />
-
-  <!-- Google Fonts -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
-    rel="stylesheet"
-  />
-
-  <style>
-    /* =====================================================
-       GLOBAL
-    ===================================================== */
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: "DM Sans", sans-serif;
-      line-height: 1.6;
-      color: #1f2937;
-      background: #f7faf8;
-    }
-
-    a {
-      text-decoration: none;
-      color: inherit;
-    }
-
-    button,
-    input {
-      font-family: inherit;
-    }
-
-
-    /* =====================================================
-       NAVBAR
-    ===================================================== */
-
-    .navbar {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-
-      height: 74px;
-
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(15px);
-
-      border-bottom: 1px solid #e5eee8;
-
-      display: flex;
-      align-items: center;
-    }
-
-    .nav-container {
-      width: min(1180px, 92%);
-      margin: auto;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      font-size: 23px;
-      font-weight: 700;
-
-      color: #176b43;
-    }
-
-    .logo i {
-      width: 40px;
-      height: 40px;
-
-      border-radius: 12px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: #e8f7ee;
-      color: #239b5c;
-
-      font-size: 19px;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 30px;
-
-      list-style: none;
-    }
-
-    .nav-links a {
-      color: #53635b;
-
-      font-size: 14px;
-      font-weight: 600;
-
-      transition: 0.25s;
-    }
-
-    .nav-links a:hover {
-      color: #1e8b53;
-    }
-
-    .nav-button {
-      background: #1f8f54 !important;
-      color: white !important;
-
-      padding: 11px 20px;
-
-      border-radius: 10px;
-
-      box-shadow:
-        0 7px 20px rgba(31, 143, 84, 0.2);
-    }
-
-    .nav-button:hover {
-      background: #176b43 !important;
-    }
-
-
-    /* =====================================================
-       HERO
-    ===================================================== */
-
-    .hero {
-      min-height: 650px;
-
-      display: flex;
-      align-items: center;
-
-      position: relative;
-      overflow: hidden;
-
-      background:
-        radial-gradient(
-          circle at 90% 20%,
-          rgba(77, 181, 115, 0.13),
-          transparent 30%
-        ),
-        radial-gradient(
-          circle at 10% 80%,
-          rgba(104, 193, 137, 0.10),
-          transparent 30%
-        ),
-        #f7faf8;
-    }
-
-    .hero-container {
-      width: min(1180px, 92%);
-      margin: auto;
-
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-
-      align-items: center;
-
-      gap: 70px;
-
-      padding: 80px 0;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-
-      background: #e7f6ed;
-      color: #217b4a;
-
-      border: 1px solid #ccebd8;
-
-      border-radius: 50px;
-
-      padding: 8px 14px;
-
-      font-size: 13px;
-      font-weight: 700;
-
-      margin-bottom: 22px;
-    }
-
-    .hero-badge i {
-      font-size: 12px;
-    }
-
-    .hero h1 {
-      font-family: "Playfair Display", serif;
-
-      font-size: clamp(42px, 5vw, 66px);
-
-      line-height: 1.08;
-
-      color: #163c2b;
-
-      margin-bottom: 22px;
-
-      letter-spacing: -1.5px;
-    }
-
-    .hero h1 span {
-      color: #239b5c;
-    }
-
-    .hero-text {
-      max-width: 580px;
-
-      color: #64746c;
-
-      font-size: 17px;
-
-      line-height: 1.8;
-
-      margin-bottom: 32px;
-    }
-
-    .hero-buttons {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    .primary-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-
-      gap: 9px;
-
-      padding: 14px 23px;
-
-      border-radius: 11px;
-
-      background: #1f8f54;
-      color: white;
-
-      font-weight: 700;
-
-      border: none;
-
-      cursor: pointer;
-
-      transition: 0.25s;
-
-      box-shadow:
-        0 10px 25px rgba(31, 143, 84, 0.22);
-    }
-
-    .primary-btn:hover {
-      background: #176b43;
-
-      transform: translateY(-2px);
-    }
-
-    .secondary-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-
-      gap: 9px;
-
-      padding: 14px 23px;
-
-      border-radius: 11px;
-
-      background: white;
-      color: #276744;
-
-      border: 1px solid #d7e7dc;
-
-      font-weight: 700;
-
-      transition: 0.25s;
-    }
-
-    .secondary-btn:hover {
-      border-color: #8dc7a5;
-
-      transform: translateY(-2px);
-    }
-
-
-    /* =====================================================
-       CODED PLANT VISUAL
-    ===================================================== */
-
-    .hero-image {
-      display: flex;
-
-      align-items: center;
-      justify-content: center;
-
-      position: relative;
-    }
-
-    .plant-card {
-      width: min(500px, 100%);
-      height: 470px;
-
-      background:
-        radial-gradient(
-          circle at 50% 45%,
-          #e5f7eb 0%,
-          #f4faf6 38%,
-          #ffffff 75%
-        );
-
-      border: 1px solid #deebe3;
-
-      border-radius: 35px;
-
-      box-shadow:
-        0 30px 80px rgba(25, 86, 50, 0.12);
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      position: relative;
-
-      overflow: hidden;
-    }
-
-    .plant-card::before {
-      content: "";
-
-      position: absolute;
-
-      width: 350px;
-      height: 350px;
-
-      border-radius: 50%;
-
-      background: #d8f1e1;
-
-      opacity: 0.75;
-
-      filter: blur(1px);
-    }
-
-    .coded-leaf {
-      width: 100%;
-      max-width: 500px;
-
-      position: relative;
-      z-index: 2;
-
-      animation: floating 5s ease-in-out infinite;
-    }
-
-    .coded-leaf svg {
-      width: 100%;
-      height: auto;
-
-      display: block;
-
-      overflow: visible;
-    }
-
-    @keyframes floating {
-      0%,
-      100% {
-        transform: translateY(0) rotate(0deg);
-      }
-
-      50% {
-        transform: translateY(-10px) rotate(-1deg);
-      }
-    }
-
-
-    /* =====================================================
-       AI STATUS CARD
-    ===================================================== */
-
-    .ai-status-card {
-      position: absolute;
-
-      z-index: 5;
-
-      left: 25px;
-      bottom: 25px;
-
-      display: flex;
-      align-items: center;
-
-      gap: 12px;
-
-      padding: 13px 17px;
-
-      background: rgba(255, 255, 255, 0.94);
-
-      backdrop-filter: blur(12px);
-
-      border: 1px solid #dcebe2;
-
-      border-radius: 15px;
-
-      box-shadow:
-        0 15px 35px rgba(20, 70, 40, 0.12);
-    }
-
-    .status-icon {
-      width: 38px;
-      height: 38px;
-
-      border-radius: 10px;
-
-      background: #e3f6ea;
-      color: #219653;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .ai-status-card strong {
-      display: block;
-
-      font-size: 13px;
-
-      color: #204c35;
-    }
-
-    .ai-status-card span {
-      display: block;
-
-      margin-top: 2px;
-
-      font-size: 11px;
-
-      color: #829189;
-    }
-
-
-    /* =====================================================
-       GENERAL SECTION
-    ===================================================== */
-
-    section {
-      padding: 95px 0;
-    }
-
-    .section-container {
-      width: min(1180px, 92%);
-      margin: auto;
-    }
-
-    .section-heading {
-      text-align: center;
-
-      max-width: 680px;
-
-      margin: 0 auto 55px;
-    }
-
-    .section-label {
-      display: inline-block;
-
-      color: #239b5c;
-
-      text-transform: uppercase;
-
-      font-size: 12px;
-
-      letter-spacing: 1.5px;
-
-      font-weight: 800;
-
-      margin-bottom: 10px;
-    }
-
-    .section-heading h2 {
-      font-family: "Playfair Display", serif;
-
-      font-size: 40px;
-
-      line-height: 1.2;
-
-      color: #173d2b;
-
-      margin-bottom: 15px;
-    }
-
-    .section-heading p {
-      color: #718078;
-
-      font-size: 15px;
-    }
-
-
-    /* =====================================================
-       HOW IT WORKS
-    ===================================================== */
-
-    .how-section {
-      background: white;
-    }
-
-    .cards {
-      display: grid;
-
-      grid-template-columns: repeat(3, 1fr);
-
-      gap: 24px;
-    }
-
-    .card {
-      background: #fbfdfb;
-
-      border: 1px solid #e2ece6;
-
-      border-radius: 18px;
-
-      padding: 30px;
-
-      text-align: center;
-
-      transition: 0.3s;
-    }
-
-    .card:hover {
-      transform: translateY(-7px);
-
-      box-shadow:
-        0 18px 40px rgba(36, 95, 59, 0.09);
-
-      border-color: #c7e2d2;
-    }
-
-    .card-icon {
-      width: 62px;
-      height: 62px;
-
-      margin: 0 auto 20px;
-
-      border-radius: 17px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: #e8f7ee;
-
-      color: #239b5c;
-
-      font-size: 24px;
-    }
-
-    .card h3 {
-      color: #234936;
-
-      margin-bottom: 9px;
-
-      font-size: 19px;
-    }
-
-    .card p {
-      color: #718078;
-
-      font-size: 14px;
-    }
-
-
-    /* =====================================================
-       ANALYZER
-    ===================================================== */
-
-    .analyzer-section {
-      background: #f3f8f5;
-    }
-
-    .analyzer-wrapper {
-      max-width: 850px;
-
-      margin: auto;
-
-      background: white;
-
-      border: 1px solid #dfeae3;
-
-      border-radius: 25px;
-
-      padding: 35px;
-
-      box-shadow:
-        0 20px 55px rgba(38, 85, 57, 0.08);
-    }
-
-    .upload-area {
-      border: 2px dashed #9dccae;
-
-      border-radius: 19px;
-
-      padding: 50px 25px;
-
-      text-align: center;
-
-      cursor: pointer;
-
-      background: #fbfefc;
-
-      transition: 0.3s;
-    }
-
-    .upload-area:hover {
-      background: #eef9f2;
-
-      border-color: #48a96f;
-    }
-
-    .upload-icon {
-      font-size: 45px;
-
-      color: #2b9b5e;
-
-      margin-bottom: 15px;
-    }
-
-    .upload-text {
-      color: #275c40;
-
-      font-weight: 700;
-
-      font-size: 16px;
-
-      margin-bottom: 7px;
-    }
-
-    .upload-subtext {
-      color: #89968f;
-
-      font-size: 13px;
-    }
-
-    #imageInput {
-      display: none;
-    }
-
-    #imagePreview {
-      max-width: 100%;
-
-      max-height: 330px;
-
-      margin: 25px auto 0;
-
-      border-radius: 14px;
-
-      display: none;
-
-      box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.08);
-    }
-
-    .analyze-button {
-      display: block;
-
-      width: 100%;
-
-      padding: 15px;
-
-      margin-top: 20px;
-
-      background: #1f8f54;
-
-      color: white;
-
-      border: none;
-
-      border-radius: 11px;
-
-      cursor: pointer;
-
-      font-size: 15px;
-
-      font-weight: 700;
-
-      transition: 0.25s;
-    }
-
-    .analyze-button:hover {
-      background: #176b43;
-
-      transform: translateY(-1px);
-    }
-
-    #loading {
-      text-align: center;
-
-      margin-top: 25px;
-
-      color: #238c55;
-
-      font-weight: 700;
-
-      padding: 18px;
-
-      background: #effaf3;
-
-      border-radius: 12px;
-    }
-
-    #result {
-      text-align: left;
-
-      margin-top: 25px;
-
-      background: #f2f9f4;
-
-      padding: 25px;
-
-      border-radius: 15px;
-
-      border: 1px solid #cce5d4;
-
-      color: #344b3d;
-
-      line-height: 1.8;
-    }
-
-    #result h3 {
-      color: #1c7247;
-
-      margin-bottom: 12px;
-    }
-
-    #downloadButton {
-      display: block;
-
-      width: 100%;
-
-      padding: 14px;
-
-      background: #e74c3c;
-
-      color: white;
-
-      border: none;
-
-      border-radius: 10px;
-
-      cursor: pointer;
-
-      font-size: 15px;
-
-      font-weight: 700;
-
-      margin-top: 15px;
-
-      transition: 0.25s;
-    }
-
-    #downloadButton:hover {
-      background: #c0392b;
-
-      transform: translateY(-1px);
-    }
-
-
-    /* =====================================================
-       FEATURES
-    ===================================================== */
-
-    .features-section {
-      background: white;
-    }
-
-    .features {
-      display: grid;
-
-      grid-template-columns: repeat(2, 1fr);
-
-      gap: 18px;
-
-      max-width: 900px;
-
-      margin: auto;
-    }
-
-    .feature {
-      background: #f8fbf9;
-
-      border: 1px solid #e2ece6;
-
-      border-radius: 15px;
-
-      padding: 20px;
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 15px;
-
-      transition: 0.25s;
-    }
-
-    .feature:hover {
-      transform: translateY(-3px);
-
-      border-color: #b9d9c5;
-
-      box-shadow:
-        0 10px 25px rgba(35, 90, 56, 0.06);
-    }
-
-    .feature-icon {
-      min-width: 45px;
-
-      height: 45px;
-
-      border-radius: 12px;
-
-      display: flex;
-
-      align-items: center;
-      justify-content: center;
-
-      background: #e8f7ee;
-
-      color: #239b5c;
-
-      font-size: 18px;
-    }
-
-    .feature span {
-      color: #41554a;
-
-      font-size: 14px;
-
-      font-weight: 600;
-    }
-
-
-    /* =====================================================
-       ABOUT
-    ===================================================== */
-
-    .about-section {
-      background: #f3f8f5;
-    }
-
-    .about-grid {
-      display: grid;
-
-      grid-template-columns: 1fr 1fr;
-
-      gap: 70px;
-
-      align-items: center;
-    }
-
-    .about-content .section-label {
-      margin-bottom: 8px;
-    }
-
-    .about-content h2 {
-      font-family: "Playfair Display", serif;
-
-      color: #173d2b;
-
-      font-size: 42px;
-
-      line-height: 1.2;
-
-      margin-bottom: 20px;
-    }
-
-    .about-content p {
-      color: #68776f;
-
-      font-size: 15px;
-
-      line-height: 1.9;
-
-      margin-bottom: 16px;
-    }
-
-    .about-points {
-      display: grid;
-
-      gap: 13px;
-
-      margin-top: 25px;
-    }
-
-    .about-point {
-      display: flex;
-
-      align-items: center;
-
-      gap: 12px;
-
-      color: #365746;
-
-      font-size: 14px;
-
-      font-weight: 600;
-    }
-
-    .about-point i {
-      color: #239b5c;
-    }
-
-    .about-box {
-      background: white;
-
-      border-radius: 25px;
-
-      padding: 40px;
-
-      border: 1px solid #deebe3;
-
-      box-shadow:
-        0 20px 45px rgba(35, 82, 53, 0.07);
-    }
-
-    .about-box-icon {
-      width: 65px;
-      height: 65px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: #e8f7ee;
-
-      color: #239b5c;
-
-      border-radius: 18px;
-
-      font-size: 26px;
-
-      margin-bottom: 22px;
-    }
-
-    .about-box h3 {
-      color: #234936;
-
-      margin-bottom: 12px;
-
-      font-size: 21px;
-    }
-
-    .about-box p {
-      color: #718078;
-
-      font-size: 14px;
-
-      line-height: 1.8;
-    }
-
-
-    /* =====================================================
-       CTA
-    ===================================================== */
-
-    .cta-section {
-      padding: 75px 0;
-
-      background: #173d2b;
-    }
-
-    .cta-box {
-      text-align: center;
-
-      max-width: 750px;
-
-      margin: auto;
-    }
-
-    .cta-box h2 {
-      font-family: "Playfair Display", serif;
-
-      color: white;
-
-      font-size: 42px;
-
-      margin-bottom: 15px;
-    }
-
-    .cta-box p {
-      color: #bdd0c4;
-
-      margin-bottom: 27px;
-
-      font-size: 15px;
-    }
-
-    .cta-box .primary-btn {
-      background: white;
-
-      color: #176b43;
-
-      box-shadow: none;
-    }
-
-    .cta-box .primary-btn:hover {
-      background: #eaf7ef;
-    }
-
-
-    /* =====================================================
-       FOOTER
-    ===================================================== */
-
-    footer {
-      background: #102d20;
-
-      color: #b8c9bf;
-
-      padding: 55px 0 25px;
-    }
-
-    .footer-container {
-      width: min(1180px, 92%);
-
-      margin: auto;
-    }
-
-    .footer-grid {
-      display: grid;
-
-      grid-template-columns: 1.5fr 1fr 1fr;
-
-      gap: 60px;
-
-      padding-bottom: 40px;
-
-      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-    }
-
-    .footer-brand .logo {
-      color: white;
-
-      margin-bottom: 15px;
-    }
-
-    .footer-brand p {
-      max-width: 370px;
-
-      font-size: 13px;
-
-      line-height: 1.8;
-
-      color: #91a79a;
-    }
-
-    .footer-column h4 {
-      color: white;
-
-      font-size: 14px;
-
-      margin-bottom: 17px;
-    }
-
-    .footer-column a {
-      display: block;
-
-      color: #91a79a;
-
-      font-size: 13px;
-
-      margin-bottom: 10px;
-
-      transition: 0.2s;
-    }
-
-    .footer-column a:hover {
-      color: #6fce98;
-    }
-
-    .footer-bottom {
-      display: flex;
-
-      align-items: center;
-
-      justify-content: space-between;
-
-      padding-top: 22px;
-
-      gap: 20px;
-    }
-
-    .footer-bottom p {
-      font-size: 12px;
-
-      color: #7f9589;
-    }
-
-    .social-links {
-      display: flex;
-
-      gap: 10px;
-    }
-
-    .social-links a {
-      width: 35px;
-      height: 35px;
-
-      border-radius: 9px;
-
-      display: flex;
-
-      align-items: center;
-      justify-content: center;
-
-      background: rgba(255, 255, 255, 0.06);
-
-      color: #a8bcb0;
-
-      transition: 0.2s;
-    }
-
-    .social-links a:hover {
-      background: #239b5c;
-
-      color: white;
-    }
-
-
-    /* =====================================================
-       RESPONSIVE
-    ===================================================== */
-
-    @media (max-width: 900px) {
-
-      .hero-container {
-        grid-template-columns: 1fr;
-
-        gap: 50px;
-
-        text-align: center;
-      }
-
-      .hero-text {
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .hero-buttons {
-        justify-content: center;
-      }
-
-      .hero-image {
-        max-width: 550px;
-
-        width: 100%;
-
-        margin: auto;
-      }
-
-      .cards {
-        grid-template-columns: 1fr;
-      }
-
-      .about-grid {
-        grid-template-columns: 1fr;
-
-        gap: 40px;
-      }
-
-      .footer-grid {
-        grid-template-columns: 1fr 1fr;
-
-        gap: 40px;
-      }
-    }
-
-
-    @media (max-width: 650px) {
-
-      .navbar {
-        height: 65px;
-      }
-
-      .nav-links {
-        gap: 14px;
-      }
-
-      .nav-links li:not(:last-child) {
-        display: none;
-      }
-
-      .nav-button {
-        padding: 9px 13px;
-      }
-
-      .hero {
-        min-height: auto;
-      }
-
-      .hero-container {
-        padding: 65px 0;
-      }
-
-      .hero h1 {
-        font-size: 42px;
-      }
-
-      .hero-text {
-        font-size: 15px;
-      }
-
-      .plant-card {
-        height: 350px;
-
-        border-radius: 22px;
-      }
-
-      .plant-card::before {
-        width: 260px;
-        height: 260px;
-      }
-
-      .ai-status-card {
-        left: 15px;
-        bottom: 15px;
-      }
-
-      .section-heading h2,
-      .about-content h2,
-      .cta-box h2 {
-        font-size: 32px;
-      }
-
-      section {
-        padding: 70px 0;
-      }
-
-      .analyzer-wrapper {
-        padding: 18px;
-
-        border-radius: 18px;
-      }
-
-      .upload-area {
-        padding: 40px 15px;
-      }
-
-      .features {
-        grid-template-columns: 1fr;
-      }
-
-      .footer-grid {
-        grid-template-columns: 1fr;
-
-        gap: 30px;
-      }
-
-      .footer-bottom {
-        flex-direction: column;
-
-        text-align: center;
-      }
-    }
-  </style>
-</head>
-
-
-<body>
-
-
-  <!-- =====================================================
-       NAVBAR
-  ===================================================== -->
-
-  <nav class="navbar">
-
-    <div class="nav-container">
-
-      <a href="#home" class="logo">
-        <i class="fas fa-leaf"></i>
-        PlantScan
-      </a>
-
-      <ul class="nav-links">
-
-        <li>
-          <a href="#home">Home</a>
-        </li>
-
-        <li>
-          <a href="#how-it-works">How It Works</a>
-        </li>
-
-        <li>
-          <a href="#features">Features</a>
-        </li>
-
-        <li>
-          <a href="#about">About</a>
-        </li>
-
-        <li>
-          <a href="#analyzer" class="nav-button">
-            Analyze Plant
-          </a>
-        </li>
-
-      </ul>
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="PlantScan is an AI-powered plant analysis platform for species, health, care, and PDF reports from a simple plant photo."
+    />
+    <title>PlantScan | AI-Powered Plant Analysis</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+      <defs>
+        <symbol id="icon-leaf" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M19 2c-4.8 0-9.1 2.5-12.1 6.6C4.5 12.7 4 17 5.6 20.2c1 1.9 3.1 2.8 5.3 2.3 3.5-.8 6.5-3.3 8.1-7.4C20.9 11.2 20.9 5.5 19 2Zm-7.6 13.1c-1.3-1.7-2.4-3.8-3.1-6 1.7-1.6 3.6-2.4 5.6-2.6-1 2.3-2 4.7-2.5 8.6Z"/>
+        </symbol>
+        <symbol id="icon-spark" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M12 2.2 13.8 8l5.9 1.8-5.9 1.8L12 17.5l-1.8-5.9-5.9-1.8L10.2 8l1.8-5.8Zm7.3 11.1.9 2.8 2.8.9-2.8.9-.9 2.8-.9-2.8-2.8-.9 2.8-.9.9-2.8Z"/>
+        </symbol>
+        <symbol id="icon-upload" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13A1.5 1.5 0 0 0 20 18.5V16"/>
+        </symbol>
+        <symbol id="icon-camera" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 8h3l1.2-2h7.6L17 8h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Zm8 2.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>
+        </symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="m16 16 4 4"/>
+        </symbol>
+        <symbol id="icon-pdf" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm7 1.5V9h4.5M8 13.5h7M8 17h7"/>
+        </symbol>
+        <symbol id="icon-health" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 21s-8-4.7-8-11V7l8-4 8 4v3c0 6.3-8 11-8 11Zm-1-8h2m-1-1v2"/>
+        </symbol>
+        <symbol id="icon-water" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M12 2.6c-.5.7-5 6.6-5 10.1A5 5 0 1 0 17 12.7c0-3.5-4.5-9.4-5-10.1Z"/>
+        </symbol>
+        <symbol id="icon-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 2.5v2.1M12 19.4v2.1M19.4 12h2.1M2.5 12h2.1M17.7 6.3l1.5-1.5M4.8 19.2l1.5-1.5M17.7 17.7l1.5 1.5M4.8 4.8l1.5 1.5"/>
+        </symbol>
+        <symbol id="icon-care" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 20.5s-6.5-4.5-6.5-9.8A3.8 3.8 0 0 1 9.3 7c1.1 0 2.2.5 2.7 1.3.5-.8 1.6-1.3 2.7-1.3a3.8 3.8 0 0 1 3.8 3.7c0 5.3-6.5 9.8-6.5 9.8Z"/>
+        </symbol>
+        <symbol id="icon-check" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 12 4.5 4.5L19 3"/>
+        </symbol>
+        <symbol id="icon-arrow" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 5v13m0 0-5-5m5 5 5-5"/>
+        </symbol>
+        <symbol id="icon-menu" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/>
+        </symbol>
+        <symbol id="icon-close" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/>
+        </symbol>
+        <symbol id="icon-bolt" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M13 2 6 12h5l-1 10 8-12h-5l1-8Z"/>
+        </symbol>
+        <symbol id="icon-facts" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 7.5v6.5M12 16.8h.1"/>
+        </symbol>
+        <symbol id="icon-scan" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5A1.5 1.5 0 0 1 18.5 20H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/>
+          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        </symbol>
+        <symbol id="icon-remove" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M8 12h8"/>
+        </symbol>
+        <symbol id="icon-refresh" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4"/>
+        </symbol>
+        <symbol id="icon-github" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M12 .7A11.3 11.3 0 0 0 8.4 22.4c.6.1.8-.3.8-.6v-2.2c-3.4.7-4.1-1.5-4.1-1.5-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.8.1-.8 1.3.1 2 1.4 2 1.4 1.1 1.8 2.8 1.3 3.4 1 .1-.8.5-1.3.8-1.6-2.7-.3-5.5-1.4-5.5-6.2 0-1.4.5-2.6 1.4-3.5-.1-.3-.6-1.7.1-3.4 0 0 1.1-.4 3.6 1.4a12.6 12.6 0 0 1 6.6 0c2.5-1.8 3.6-1.4 3.6-1.4.7 1.7.2 3.1.1 3.4.9.9 1.4 2.1 1.4 3.5 0 4.8-2.8 5.9-5.5 6.2.4.4.7 1 .7 2.1v3.2c0 .4.2.7.8.6A11.3 11.3 0 0 0 12 .7Z"/>
+        </symbol>
+        <symbol id="icon-shield" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3.5 18.5 6v5.7c0 4.4-2.7 8.1-6.5 10.3-3.8-2.2-6.5-5.9-6.5-10.3V6L12 3.5Zm-2.8 9.6 1.9 1.9 4.2-4.2"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="bg-decoration" aria-hidden="true">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="grid-overlay"></div>
     </div>
 
-  </nav>
-
-
-  <!-- =====================================================
-       HERO
-  ===================================================== -->
-
-  <section class="hero" id="home">
-
-    <div class="hero-container">
-
-
-      <!-- HERO TEXT -->
-
-      <div class="hero-content">
-
-        <div class="hero-badge">
-
-          <i class="fas fa-sparkles"></i>
-
-          AI-Powered Plant Intelligence
-
-        </div>
-
-
-        <h1>
-
-          Understand Your
-          <span>Plants</span>
-          Better
-
-        </h1>
-
-
-        <p class="hero-text">
-
-          PlantScan uses advanced AI technology to analyze plant images,
-          identify species, assess plant health, and provide personalized
-          care recommendations in seconds.
-
-        </p>
-
-
-        <div class="hero-buttons">
-
-          <a href="#analyzer" class="primary-btn">
-
-            <i class="fas fa-camera"></i>
-
-            Analyze Your Plant
-
-          </a>
-
-
-          <a href="#how-it-works" class="secondary-btn">
-
-            <i class="fas fa-arrow-down"></i>
-
-            Learn More
-
-          </a>
-
-        </div>
-
-      </div>
-
-
-
-      <!-- CODED PLANT -->
-
-      <div class="hero-image">
-
-        <div class="plant-card">
-
-
-          <div class="coded-leaf">
-
-            <svg
-              viewBox="0 0 600 500"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-label="Green plant leaf"
-            >
-
-              <defs>
-
-
-                <!-- Main leaf gradient -->
-
-                <linearGradient
-                  id="leafGradient"
-                  x1="0%"
-                  y1="100%"
-                  x2="100%"
-                  y2="0%"
-                >
-
-                  <stop
-                    offset="0%"
-                    stop-color="#075f32"
-                  />
-
-                  <stop
-                    offset="30%"
-                    stop-color="#0c833e"
-                  />
-
-                  <stop
-                    offset="65%"
-                    stop-color="#25ad59"
-                  />
-
-                  <stop
-                    offset="100%"
-                    stop-color="#82db87"
-                  />
-
-                </linearGradient>
-
-
-                <!-- Leaf highlight -->
-
-                <linearGradient
-                  id="highlightGradient"
-                  x1="0%"
-                  y1="100%"
-                  x2="100%"
-                  y2="0%"
-                >
-
-                  <stop
-                    offset="0%"
-                    stop-color="#ffffff"
-                    stop-opacity="0"
-                  />
-
-                  <stop
-                    offset="50%"
-                    stop-color="#ffffff"
-                    stop-opacity=".16"
-                  />
-
-                  <stop
-                    offset="100%"
-                    stop-color="#ffffff"
-                    stop-opacity=".42"
-                  />
-
-                </linearGradient>
-
-
-                <!-- Shadow -->
-
-                <filter
-                  id="leafShadow"
-                  x="-30%"
-                  y="-30%"
-                  width="160%"
-                  height="160%"
-                >
-
-                  <feDropShadow
-                    dx="0"
-                    dy="18"
-                    stdDeviation="15"
-                    flood-opacity=".18"
-                  />
-
-                </filter>
-
-
-                <!-- Glow -->
-
-                <filter id="softBlur">
-
-                  <feGaussianBlur
-                    stdDeviation="18"
-                  />
-
-                </filter>
-
-              </defs>
-
-
-
-              <!-- Soft green glow -->
-
-              <ellipse
-                cx="330"
-                cy="260"
-                rx="190"
-                ry="145"
-                fill="#76d99b"
-                opacity=".13"
-                filter="url(#softBlur)"
-              />
-
-
-
-              <!-- Main leaf -->
-
-              <path
-                d="
-                  M105 405
-                  C145 335 190 250 280 165
-                  C365 85 470 55 535 60
-                  C515 145 475 250 390 330
-                  C305 410 205 430 105 405
-                  Z
-                "
-
-                fill="url(#leafGradient)"
-
-                filter="url(#leafShadow)"
-              />
-
-
-
-              <!-- Leaf highlight -->
-
-              <path
-                d="
-                  M120 390
-                  C180 310 230 235 310 165
-                  C380 105 450 75 515 70
-                  C450 105 390 155 335 220
-                  C275 290 220 355 120 390
-                  Z
-                "
-
-                fill="url(#highlightGradient)"
-              />
-
-
-
-              <!-- Central vein -->
-
-              <path
-                d="M110 405 C220 340 325 235 525 68"
-
-                fill="none"
-
-                stroke="#b9edaa"
-
-                stroke-width="6"
-
-                stroke-linecap="round"
-
-                opacity=".9"
-              />
-
-
-
-              <!-- Left veins -->
-
-              <g
-                fill="none"
-                stroke="#9bdd91"
-                stroke-width="3"
-                stroke-linecap="round"
-                opacity=".72"
-              >
-
-                <path d="M180 360 C170 320 160 290 145 265" />
-
-                <path d="M220 335 C210 290 205 250 195 220" />
-
-                <path d="M260 305 C250 260 250 215 245 180" />
-
-                <path d="M305 270 C300 225 305 180 310 145" />
-
-                <path d="M350 230 C350 190 365 150 380 115" />
-
-                <path d="M400 190 C410 150 430 120 450 92" />
-
-              </g>
-
-
-
-              <!-- Right veins -->
-
-              <g
-                fill="none"
-                stroke="#79ca78"
-                stroke-width="3"
-                stroke-linecap="round"
-                opacity=".65"
-              >
-
-                <path d="M175 370 C220 375 255 370 290 355" />
-
-                <path d="M215 335 C265 350 310 345 350 325" />
-
-                <path d="M255 300 C305 315 350 305 390 280" />
-
-                <path d="M300 260 C350 275 395 255 430 230" />
-
-                <path d="M345 220 C390 230 430 210 465 180" />
-
-                <path d="M395 180 C435 185 470 165 495 140" />
-
-              </g>
-
-
-
-              <!-- Stem -->
-
-              <path
-                d="M105 405 C75 425 55 445 35 465"
-
-                fill="none"
-
-                stroke="#1c7c45"
-
-                stroke-width="10"
-
-                stroke-linecap="round"
-              />
-
-            </svg>
-
-          </div>
-
-
-
-          <!-- AI Status -->
-
-          <div class="ai-status-card">
-
-            <div class="status-icon">
-
-              <i class="fas fa-check"></i>
-
-            </div>
-
-            <div>
-
-              <strong>
-                AI Analysis Ready
-              </strong>
-
-              <span>
-                Identify • Analyze • Care
-              </span>
-
-            </div>
-
-          </div>
-
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-
-  <!-- =====================================================
-       HOW IT WORKS
-  ===================================================== -->
-
-  <section
-    class="how-section"
-    id="how-it-works"
-  >
-
-    <div class="section-container">
-
-
-      <div class="section-heading">
-
-        <span class="section-label">
-          Simple Process
-        </span>
-
-        <h2>
-          How PlantScan Works
-        </h2>
-
-        <p>
-          Get meaningful insights about your plant through three simple steps.
-        </p>
-
-      </div>
-
-
-
-      <div class="cards">
-
-
-        <div class="card">
-
-          <div class="card-icon">
-
-            <i class="fas fa-cloud-upload-alt"></i>
-
-          </div>
-
-          <h3>
-            Upload
-          </h3>
-
-          <p>
-            Select or drag and drop a clear image of your plant.
-          </p>
-
-        </div>
-
-
-
-        <div class="card">
-
-          <div class="card-icon">
-
-            <i class="fas fa-microscope"></i>
-
-          </div>
-
-          <h3>
-            Analyze
-          </h3>
-
-          <p>
-            Our AI examines the image and generates detailed plant insights.
-          </p>
-
-        </div>
-
-
-
-        <div class="card">
-
-          <div class="card-icon">
-
-            <i class="fas fa-file-pdf"></i>
-
-          </div>
-
-          <h3>
-            Download
-          </h3>
-
-          <p>
-            View your results and download a detailed PDF report.
-          </p>
-
-        </div>
-
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-
-  <!-- =====================================================
-       ANALYZER
-  ===================================================== -->
-
-  <section
-    class="analyzer-section"
-    id="analyzer"
-  >
-
-    <div class="section-container">
-
-
-      <div class="section-heading">
-
-        <span class="section-label">
-          Plant Analyzer
-        </span>
-
-        <h2>
-          Analyze Your Plant
-        </h2>
-
-        <p>
-          Upload a plant image and let AI provide detailed information about it.
-        </p>
-
-      </div>
-
-
-
-      <div class="analyzer-wrapper">
-
-
-        <form
-          id="uploadForm"
-          enctype="multipart/form-data"
-        >
-
-
-          <div
-            class="upload-area"
-            id="dropArea"
-          >
-
-            <i
-              class="fas fa-cloud-upload-alt upload-icon"
-            ></i>
-
-
-            <p class="upload-text">
-              Drag & Drop or Click to Upload Plant Image
-            </p>
-
-
-            <p class="upload-subtext">
-              Supported image formats: JPG, JPEG, PNG, WEBP
-            </p>
-
-
-            <input
-              type="file"
-              name="image"
-              accept="image/*"
-              required
-              id="imageInput"
-            />
-
-
-            <img
-              id="imagePreview"
-              alt="Image preview"
-            />
-
-          </div>
-
-
-
-          <button
-            type="submit"
-            class="analyze-button"
-          >
-
-            <i class="fas fa-search"></i>
-
-            Analyze Plant
-
-          </button>
-
-
-        </form>
-
-
-
-        <!-- Loading -->
-
-        <div
-          id="loading"
-          style="display: none"
-        >
-
-          <i class="fas fa-spinner fa-spin"></i>
-
-          Analyzing plant image...
-
-        </div>
-
-
-
-        <!-- Result -->
-
-        <div id="result"></div>
-
-
-
-        <!-- Download -->
-
-        <button
-          id="downloadButton"
-          style="display: none"
-        >
-
-          <i class="fas fa-file-pdf"></i>
-
-          Download PDF Report
-
-        </button>
-
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-
-  <!-- =====================================================
-       FEATURES
-  ===================================================== -->
-
-  <section
-    class="features-section"
-    id="features"
-  >
-
-    <div class="section-container">
-
-
-      <div class="section-heading">
-
-        <span class="section-label">
-          Powerful Features
-        </span>
-
-        <h2>
-          Everything You Need
-        </h2>
-
-        <p>
-          PlantScan combines image analysis and AI to help you understand
-          and care for your plants.
-        </p>
-
-      </div>
-
-
-
-      <div class="features">
-
-
-        <div class="feature">
-
-          <i class="fas fa-seedling feature-icon"></i>
-
-          <span>
-            Accurate plant species identification
+    <header class="navbar" id="navbar">
+      <div class="container nav-wrap">
+        <a href="#home" class="logo" aria-label="PlantScan home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="22" height="22"><use href="#icon-leaf"/></svg>
           </span>
-
-        </div>
-
-
-
-        <div class="feature">
-
-          <i class="fas fa-heartbeat feature-icon"></i>
-
-          <span>
-            Detailed plant health assessment
-          </span>
-
-        </div>
-
-
-
-        <div class="feature">
-
-          <i class="fas fa-list-ul feature-icon"></i>
-
-          <span>
-            Customized care recommendations
-          </span>
-
-        </div>
-
-
-
-        <div class="feature">
-
-          <i class="fas fa-bolt feature-icon"></i>
-
-          <span>
-            Fast processing and instant results
-          </span>
-
-        </div>
-
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-
-  <!-- =====================================================
-       ABOUT
-  ===================================================== -->
-
-  <section
-    class="about-section"
-    id="about"
-  >
-
-    <div class="section-container">
-
-
-      <div class="about-grid">
-
-
-        <div class="about-content">
-
-
-          <span class="section-label">
-            About PlantScan
-          </span>
-
-
-          <h2>
-            Technology That Helps Plants Thrive
-          </h2>
-
-
-          <p>
-            PlantScan is an AI-powered plant analysis tool designed to make
-            plant identification and care easier.
-          </p>
-
-
-          <p>
-            Simply upload an image of a plant and receive useful information
-            about its species, health, characteristics, care instructions,
-            and interesting facts.
-          </p>
-
-
-
-          <div class="about-points">
-
-
-            <div class="about-point">
-
-              <i class="fas fa-check-circle"></i>
-
-              AI-powered image analysis
-
-            </div>
-
-
-            <div class="about-point">
-
-              <i class="fas fa-check-circle"></i>
-
-              Detailed plant information
-
-            </div>
-
-
-            <div class="about-point">
-
-              <i class="fas fa-check-circle"></i>
-
-              Personalized care guidance
-
-            </div>
-
-
-            <div class="about-point">
-
-              <i class="fas fa-check-circle"></i>
-
-              Downloadable PDF reports
-
-            </div>
-
-
-          </div>
-
-        </div>
-
-
-
-        <div class="about-box">
-
-
-          <div class="about-box-icon">
-
-            <i class="fas fa-brain"></i>
-
-          </div>
-
-
-          <h3>
-            Powered by Artificial Intelligence
-          </h3>
-
-
-          <p>
-            PlantScan uses Google's Gemini AI to understand plant images
-            and generate useful natural-language insights. The system is
-            designed to turn a simple photograph into practical information
-            for plant enthusiasts, students, and gardeners.
-          </p>
-
-
-        </div>
-
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-
-  <!-- =====================================================
-       CTA
-  ===================================================== -->
-
-  <section class="cta-section">
-
-    <div class="section-container">
-
-
-      <div class="cta-box">
-
-
-        <h2>
-          Curious About Your Plant?
-        </h2>
-
-
-        <p>
-          Upload an image and discover what your plant might be telling you.
-        </p>
-
-
-        <a
-          href="#analyzer"
-          class="primary-btn"
-        >
-
-          <i class="fas fa-leaf"></i>
-
-          Start Plant Analysis
-
+          <span class="brand-text">PlantScan</span>
+          <span class="brand-pill">AI</span>
         </a>
 
+        <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+          <svg width="22" height="22" class="menu-icon"><use href="#icon-menu"/></svg>
+          <svg width="22" height="22" class="close-icon"><use href="#icon-close"/></svg>
+        </button>
 
+        <nav class="nav-menu" id="navMenu" aria-label="Main navigation">
+          <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#analyze">Analyze</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#about">About</a></li>
+          </ul>
+          <div class="nav-actions">
+            <a href="#analyze" class="btn btn-primary">Analyze Plant</a>
+            <a href="https://github.com/Ankit-codes47" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+              <svg width="18" height="18" aria-hidden="true"><use href="#icon-github"/></svg>
+              GitHub
+            </a>
+          </div>
+        </nav>
       </div>
+    </header>
 
-    </div>
+    <main id="home">
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-copy reveal">
+            <div class="eyebrow">
+              <svg width="14" height="14" aria-hidden="true"><use href="#icon-spark"/></svg>
+              AI-POWERED PLANT ANALYSIS
+            </div>
+            <h1>Understand Your Plant With AI</h1>
+            <p class="hero-text">
+              Upload a photograph of your plant and receive intelligent insights about its species,
+              visible health, characteristics, and care requirements.
+            </p>
+            <div class="hero-actions">
+              <a href="#analyze" class="btn btn-primary">
+                <svg width="18" height="18" aria-hidden="true"><use href="#icon-camera"/></svg>
+                Analyze My Plant
+              </a>
+              <a href="#how-it-works" class="btn btn-secondary">
+                <svg width="18" height="18" aria-hidden="true"><use href="#icon-arrow"/></svg>
+                How It Works
+              </a>
+            </div>
+          </div>
 
-  </section>
+          <div class="hero-visual reveal">
+            <div class="image-frame">
+              <img
+                src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1200&q=80"
+                alt="Healthy indoor plant with real leaves in natural light"
+                loading="eager"
+              />
+              <div class="scan-overlay" aria-hidden="true">
+                <span class="ui-pill species">Species</span>
+                <span class="ui-pill health">Health</span>
+                <span class="ui-pill care">Care</span>
+                <span class="scan-line"></span>
+                <span class="point point-a"></span>
+                <span class="point point-b"></span>
+                <span class="point point-c"></span>
+              </div>
+            </div>
+            <div class="floating-badge">
+              <span class="badge-icon">
+                <svg width="18" height="18" aria-hidden="true"><use href="#icon-check"/></svg>
+              </span>
+              <div>
+                <strong>AI Ready</strong>
+                <small>Scan • Analyze • Report</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
+      <section class="feature-strip" aria-label="PlantScan highlights">
+        <div class="container strip-grid">
+          <div class="strip-item reveal">
+            <span class="strip-icon"><svg width="22" height="22"><use href="#icon-spark"/></svg></span>
+            <span>AI-Powered Analysis</span>
+          </div>
+          <div class="strip-item reveal">
+            <span class="strip-icon"><svg width="22" height="22"><use href="#icon-bolt"/></svg></span>
+            <span>Instant Insights</span>
+          </div>
+          <div class="strip-item reveal">
+            <span class="strip-icon"><svg width="22" height="22"><use href="#icon-care"/></svg></span>
+            <span>Care Recommendations</span>
+          </div>
+          <div class="strip-item reveal">
+            <span class="strip-icon"><svg width="22" height="22"><use href="#icon-pdf"/></svg></span>
+            <span>PDF Reports</span>
+          </div>
+        </div>
+      </section>
 
+      <section class="section analyzer-section" id="analyze">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="section-label">Plant Analyzer</p>
+            <h2>Analyze Your Plant</h2>
+            <p>Upload a clear photograph of your plant or leaf and let PlantScan analyze it.</p>
+          </header>
 
-  <!-- =====================================================
-       FOOTER
-  ===================================================== -->
+          <div class="analyzer-card reveal">
+            <div class="upload-panel" id="uploadPanel">
+              <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Upload plant image">
+                <div class="drop-default" id="dropDefault">
+                  <div class="drop-photo-wrap">
+                    <img
+                      src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1400&q=80"
+                      alt="Close-up of a healthy plant leaf"
+                      class="drop-photo"
+                      width="1200"
+                      height="800"
+                      loading="lazy"
+                    />
+                    <div class="scan-overlay small-overlay" aria-hidden="true">
+                      <span class="ui-pill species">Species</span>
+                      <span class="point point-a"></span>
+                      <span class="point point-b"></span>
+                      <span class="point point-c"></span>
+                      <span class="scan-line short"></span>
+                    </div>
+                  </div>
+                  <p class="drop-title">Drop your plant image here</p>
+                  <p class="drop-subtitle">or click to browse</p>
+                  <p class="drop-hint">JPG • PNG • WEBP</p>
+                </div>
 
-  <footer>
+                <div class="drop-dragging" id="dropDragging" hidden>
+                  <p class="drop-title">Drop image to analyze</p>
+                </div>
+              </div>
 
-    <div class="footer-container">
+              <input type="file" id="imageInput" name="image" accept="image/*" hidden aria-label="Choose a plant image file" />
 
+              <div class="preview-panel" id="previewPanel" hidden>
+                <div class="preview-image-wrap">
+                  <img id="imagePreview" alt="Selected plant image preview" />
+                </div>
+                <div class="preview-meta">
+                  <div>
+                    <p class="preview-filename" id="previewFilename"></p>
+                    <p class="preview-filesize" id="previewFilesize"></p>
+                  </div>
+                  <div class="preview-actions">
+                    <button type="button" class="btn btn-secondary" id="changeImageBtn">
+                      <svg width="16" height="16" aria-hidden="true"><use href="#icon-refresh"/></svg>
+                      Change Image
+                    </button>
+                    <button type="button" class="btn btn-secondary secondary-danger" id="removeImageBtn">
+                      <svg width="16" height="16" aria-hidden="true"><use href="#icon-remove"/></svg>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-primary btn-full" id="analyzeBtn">
+                  <svg width="18" height="18" aria-hidden="true"><use href="#icon-search"/></svg>
+                  Analyze Plant
+                </button>
+              </div>
+            </div>
 
-      <div class="footer-grid">
+            <div class="loading-panel loading-section" id="loadingScreen" aria-live="polite" aria-busy="true" style="display: none;">
+              <div class="loading-content">
+                <div class="loader-visual" aria-hidden="true">
+                  <div class="scan-core">
+                    <span class="scan-ring"></span>
+                  </div>
+                </div>
+                <p class="loading-title">Analyzing your plant...</p>
+                <p class="loading-subtitle">Our AI is examining the uploaded image.</p>
+                <ul class="loading-steps loading-status">
+                  <li><span class="step-dot"></span>Image received</li>
+                  <li><span class="step-dot"></span>Scanning plant</li>
+                  <li><span class="step-dot"></span>Identifying species</li>
+                  <li><span class="step-dot"></span>Preparing insights</li>
+                </ul>
+              </div>
+            </div>
 
+            <div class="error-panel" id="errorScreen" role="alert" style="display: none;">
+              <div class="error-icon" aria-hidden="true">
+                <svg width="32" height="32"><use href="#icon-shield"/></svg>
+              </div>
+              <h3 id="errorTitle">Something went wrong</h3>
+              <p id="errorMessage">We couldn't analyze this image. Please try again with another clear plant photo.</p>
+              <button type="button" class="btn btn-primary" id="tryAgainBtn">Try Again</button>
+            </div>
 
-        <div class="footer-brand">
+            <div class="result-panel" id="resultSection" style="display: none;">
+              <div class="result-header">
+                <div>
+                  <p class="section-label inline">Plant Analysis</p>
+                  <h3>Plant Analysis</h3>
+                </div>
+              </div>
+              <div class="result-layout">
+                <div class="result-image-wrap">
+                  <img id="resultImage" alt="Analyzed plant image" />
+                </div>
+                <div class="result-content-wrap">
+                  <div class="result-overview">
+                    <h4>Plant Analysis</h4>
+                    <div id="resultContent" class="result-content"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="result-actions">
+                <button type="button" class="btn btn-primary" id="downloadBtn">
+                  <svg width="18" height="18" aria-hidden="true"><use href="#icon-pdf"/></svg>
+                  <span id="downloadBtnText">Download PDF Report</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="analyzeAnotherBtn">
+                  <svg width="18" height="18" aria-hidden="true"><use href="#icon-refresh"/></svg>
+                  Analyze Another Plant
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
+      <section class="section features-section" id="features">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="section-label">Features</p>
+            <h2>Everything You Need to Understand Your Plant</h2>
+          </header>
 
-          <a
-            href="#home"
-            class="logo"
-          >
+          <div class="feature-grid">
+            <article class="feature-card reveal">
+              <div class="feature-icon"><svg width="24" height="24"><use href="#icon-leaf"/></svg></div>
+              <span class="feature-step">01</span>
+              <h3>Plant Identification</h3>
+              <p>Identify the plant shown in your image and understand its general traits.</p>
+            </article>
+            <article class="feature-card reveal">
+              <div class="feature-icon"><svg width="24" height="24"><use href="#icon-health"/></svg></div>
+              <span class="feature-step">02</span>
+              <h3>Health Assessment</h3>
+              <p>Review visible health cues and better understand how the plant appears.</p>
+            </article>
+            <article class="feature-card reveal">
+              <div class="feature-icon"><svg width="24" height="24"><use href="#icon-care"/></svg></div>
+              <span class="feature-step">03</span>
+              <h3>Care Recommendations</h3>
+              <p>Receive practical guidance for plant maintenance and daily care routines.</p>
+            </article>
+            <article class="feature-card reveal">
+              <div class="feature-icon"><svg width="24" height="24"><use href="#icon-sun"/></svg></div>
+              <span class="feature-step">04</span>
+              <h3>Plant Characteristics</h3>
+              <p>Learn more about the plant's structure, growth habits, and environment.</p>
+            </article>
+            <article class="feature-card reveal">
+              <div class="feature-icon"><svg width="24" height="24"><use href="#icon-facts"/></svg></div>
+              <span class="feature-step">05</span>
+              <h3>Interesting Facts</h3>
+              <p>Discover additional context that helps you understand and enjoy the plant.</p>
+            </article>
+            <article class="feature-card reveal">
+              <div class="feature-icon"><svg width="24" height="24"><use href="#icon-pdf"/></svg></div>
+              <span class="feature-step">06</span>
+              <h3>PDF Reports</h3>
+              <p>Save the analysis as a structured report you can revisit later.</p>
+            </article>
+          </div>
+        </div>
+      </section>
 
-            <i class="fas fa-leaf"></i>
+      <section class="section steps-section" id="how-it-works">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="section-label">How It Works</p>
+            <h2>Simple, Clear, and Useful</h2>
+          </header>
 
-            PlantScan
+          <div class="steps-grid">
+            <article class="step-card reveal">
+              <span class="step-number">01</span>
+              <div class="step-icon"><svg width="28" height="28"><use href="#icon-upload"/></svg></div>
+              <h3>Upload</h3>
+              <p>Upload a clear photograph of a plant or leaf.</p>
+            </article>
+            <article class="step-card reveal">
+              <span class="step-number">02</span>
+              <div class="step-icon"><svg width="28" height="28"><use href="#icon-scan"/></svg></div>
+              <h3>Analyze</h3>
+              <p>PlantScan sends the image to the existing AI backend for review.</p>
+            </article>
+            <article class="step-card reveal">
+              <span class="step-number">03</span>
+              <div class="step-icon"><svg width="28" height="28"><use href="#icon-pdf"/></svg></div>
+              <h3>Discover</h3>
+              <p>Review the analysis and download a PDF report when needed.</p>
+            </article>
+          </div>
+        </div>
+      </section>
 
+      <section class="section care-section">
+        <div class="container care-grid">
+          <div class="care-visual reveal">
+            <img
+              src="https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=1200&q=80"
+              alt="Healthy indoor plant in a bright room"
+              width="1200"
+              height="1500"
+              loading="lazy"
+            />
+          </div>
+
+          <div class="care-copy reveal">
+            <p class="section-label">Plant Care</p>
+            <h2>Better Plant Care Starts With Better Information</h2>
+            <p>Use a clear plant photograph and thoughtful analysis to understand the environment and care your plant needs most.</p>
+
+            <div class="care-list">
+              <div class="care-item">
+                <span class="care-icon"><svg width="20" height="20"><use href="#icon-sun"/></svg></span>
+                <div>
+                  <strong>Light</strong>
+                  <p>Assess how sunlight exposure may affect your plant.</p>
+                </div>
+              </div>
+              <div class="care-item">
+                <span class="care-icon"><svg width="20" height="20"><use href="#icon-water"/></svg></span>
+                <div>
+                  <strong>Water</strong>
+                  <p>Understand moisture needs and watering habits.</p>
+                </div>
+              </div>
+              <div class="care-item">
+                <span class="care-icon"><svg width="20" height="20"><use href="#icon-care"/></svg></span>
+                <div>
+                  <strong>Soil</strong>
+                  <p>Review plant health and root-friendly growing conditions.</p>
+                </div>
+              </div>
+              <div class="care-item">
+                <span class="care-icon"><svg width="20" height="20"><use href="#icon-bolt"/></svg></span>
+                <div>
+                  <strong>Humidity</strong>
+                  <p>Use environment clues to better support healthy growth.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section gallery-section">
+        <div class="container">
+          <header class="section-header reveal">
+            <p class="section-label">Botanical Gallery</p>
+            <h2>Real plants. Real detail. Real insight.</h2>
+          </header>
+
+          <div class="gallery-grid reveal">
+            <figure class="gallery-card gallery-large">
+              <img src="https://images.unsplash.com/photo-1512428813834-c702c7702b78?auto=format&fit=crop&w=1200&q=80" alt="Monstera leaves in natural light" loading="lazy" />
+              <figcaption>Monstera</figcaption>
+            </figure>
+            <figure class="gallery-card gallery-small">
+              <img src="https://images.unsplash.com/photo-1520412099551-62b6bafeb5bb?auto=format&fit=crop&w=900&q=80" alt="Pothos trailing in a room" loading="lazy" />
+              <figcaption>Pothos</figcaption>
+            </figure>
+            <figure class="gallery-card gallery-small last">
+              <img src="https://images.unsplash.com/photo-1463320726281-696a485928c7?auto=format&fit=crop&w=900&q=80" alt="Green leaves close-up" loading="lazy" />
+              <figcaption>Leaf Detail</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section about-section" id="about">
+        <div class="container about-grid">
+          <div class="about-copy reveal">
+            <p class="section-label">About</p>
+            <h2>About PlantScan</h2>
+            <p>
+              PlantScan is an AI-powered plant analysis interface designed to help users understand plants from photographs and receive useful care guidance.
+            </p>
+            <p class="about-note">
+              It provides AI-generated insights for informational purposes and can help interpret visible plant characteristics, but results may vary depending on image quality and conditions.
+            </p>
+            <ul class="about-list">
+              <li><svg width="18" height="18" aria-hidden="true"><use href="#icon-check"/></svg> AI-powered image analysis</li>
+              <li><svg width="18" height="18" aria-hidden="true"><use href="#icon-check"/></svg> Plant health and care guidance</li>
+              <li><svg width="18" height="18" aria-hidden="true"><use href="#icon-check"/></svg> Clear, accessible insights</li>
+              <li><svg width="18" height="18" aria-hidden="true"><use href="#icon-check"/></svg> Downloadable PDF reports</li>
+            </ul>
+          </div>
+
+          <aside class="about-card reveal">
+            <div class="about-icon"><svg width="28" height="28"><use href="#icon-spark"/></svg></div>
+            <h3>Built for curious plant owners</h3>
+            <p>
+              Whether you are growing houseplants, learning about species, or checking a plant’s condition,
+              PlantScan helps turn a simple photo into useful, practical understanding.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section developer-section">
+        <div class="container developer-card reveal">
+          <div>
+            <p class="section-label">Developer</p>
+            <h2>Built With Curiosity &amp; Code</h2>
+            <p>Explore the project and source code on GitHub.</p>
+          </div>
+          <a href="https://github.com/Ankit-codes47" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+            <svg width="18" height="18" aria-hidden="true"><use href="#icon-github"/></svg>
+            View GitHub Profile
           </a>
+        </div>
+      </section>
+    </main>
 
-
-          <p>
-            An AI-powered plant analysis tool that helps you identify,
-            understand, and care for your plants.
-          </p>
-          <p>Developer:Ankit Kumar</p>
-
-
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="#home" class="logo footer-logo" aria-label="PlantScan home">
+            <span class="brand-mark" aria-hidden="true"><svg width="20" height="20"><use href="#icon-leaf"/></svg></span>
+            <span class="brand-text">PlantScan</span>
+          </a>
+          <p class="footer-copy">AI-powered plant insights from a simple photograph.</p>
         </div>
 
-
-
-        <div class="footer-column">
-
-
-          <h4>
-            Navigation
-          </h4>
-
-
-          <a href="#home">
-            Home
-          </a>
-
-          <a href="#how-it-works">
-            How It Works
-          </a>
-
-          <a href="#features">
-            Features
-          </a>
-
-          <a href="#about">
-            About
-          </a>
-
-
+        <div>
+          <h4>Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#analyze">Analyze</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#about">About</a></li>
+          </ul>
         </div>
 
-
-
-        <div class="footer-column">
-
-
-          <h4>
-            Get Started
-          </h4>
-
-
-          <a href="#analyzer">
-            Analyze Plant
+        <div>
+          <h4>GitHub</h4>
+          <a href="https://github.com/Ankit-codes47" class="footer-github" target="_blank" rel="noopener noreferrer">
+            <svg width="18" height="18" aria-hidden="true"><use href="#icon-github"/></svg>
+            GitHub
           </a>
-
-          <a href="#features">
-            Our Features
-          </a>
-
-          <a href="#about">
-            About PlantScan
-          </a>
-
-
         </div>
-
-
       </div>
-
-
-
-      <div class="footer-bottom">
-
-
-        <p>
-          © 2026 PlantScan. All rights reserved.
-        </p>
-
-
-        <div class="social-links">
-
-
-          <a
-            href="https://github.com/Ankit-codes47"
-            aria-label="GitHub"
-          >
-            <i class="fab fa-github"></i>
-          </a>
-
-
-          <a
-            href="https://www.linkedin.com/in/ankit-kumar-59b284372/"
-            aria-label="LinkedIn"
-          >
-            <i class="fab fa-linkedin-in"></i>
-          </a>
-
-        </div>
-
+      <div class="container footer-bottom">
+        <p>© 2026 PlantScan. All rights reserved.</p>
       </div>
+    </footer>
 
-
-    </div>
-
-  </footer>
-
-
-
-  <!-- =====================================================
-       YOUR EXISTING JAVASCRIPT
-       LOGIC KEPT THE SAME
-  ===================================================== -->
-
-  <script>
-
-    const imageInput = document.getElementById("imageInput");
-
-    const imagePreview = document.getElementById("imagePreview");
-
-    const uploadForm = document.getElementById("uploadForm");
-
-    const resultDiv = document.getElementById("result");
-
-    const loadingDiv = document.getElementById("loading");
-
-    const downloadButton = document.getElementById("downloadButton");
-
-    const dropArea = document.getElementById("dropArea");
-
-    let analysisResult = "";
-
-    let analysisImage = "";
-
-
-    dropArea.addEventListener("click", () => imageInput.click());
-
-
-    dropArea.addEventListener("dragover", (e) => {
-
-      e.preventDefault();
-
-      dropArea.style.backgroundColor = "#e8f4fd";
-
-    });
-
-
-    dropArea.addEventListener("dragleave", () => {
-
-      dropArea.style.backgroundColor = "";
-
-    });
-
-
-    dropArea.addEventListener("drop", (e) => {
-
-      e.preventDefault();
-
-      dropArea.style.backgroundColor = "";
-
-      const file = e.dataTransfer.files[0];
-
-      if (file && file.type.startsWith("image/")) {
-
-        imageInput.files = e.dataTransfer.files;
-
-        handleImageUpload(file);
-
-      }
-
-    });
-
-
-    imageInput.addEventListener("change", (event) => {
-
-      const file = event.target.files[0];
-
-      if (file) {
-
-        handleImageUpload(file);
-
-      }
-
-    });
-
-
-    function handleImageUpload(file) {
-
-      const reader = new FileReader();
-
-      reader.onload = function (e) {
-
-        imagePreview.src = e.target.result;
-
-        imagePreview.style.display = "block";
-
-      };
-
-      reader.readAsDataURL(file);
-
-    }
-
-
-    uploadForm.addEventListener("submit", async (e) => {
-
-      e.preventDefault();
-
-      const formData = new FormData(e.target);
-
-      loadingDiv.style.display = "block";
-
-      resultDiv.style.display = "none";
-
-      resultDiv.textContent = "";
-
-      downloadButton.style.display = "none";
-
-
-      try {
-
-        const response = await fetch("/analyze", {
-
-          method: "POST",
-
-          body: formData,
-
-        });
-
-
-        const data = await response.json();
-
-
-        if (data.result) {
-
-          analysisResult = data.result;
-
-          analysisImage = data.image;
-
-
-          resultDiv.innerHTML =
-            "<h3>Analysis Result:</h3><p>" +
-            analysisResult.replace(/\n/g, "<br>") +
-            "</p>";
-
-
-          resultDiv.style.display = "block";
-
-          downloadButton.style.display = "block";
-
-
-        } else if (data.error) {
-
-          resultDiv.textContent = "Error: " + data.error;
-
-          resultDiv.style.display = "block";
-
-        }
-
-
-      } catch (error) {
-
-        resultDiv.textContent = "Error: " + error.message;
-
-        resultDiv.style.display = "block";
-
-      } finally {
-
-        loadingDiv.style.display = "none";
-
-      }
-
-    });
-
-
-    downloadButton.addEventListener("click", async () => {
-
-      const response = await fetch("/download", {
-
-        method: "POST",
-
-        headers: {
-
-          "Content-Type": "application/json",
-
-        },
-
-        body: JSON.stringify({
-
-          result: analysisResult,
-
-          image: analysisImage,
-
-        }),
-
-      });
-
-
-      if (response.ok) {
-
-        const blob = await response.blob();
-
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-
-        a.href = url;
-
-        a.download = "Plant_Analysis_Report.pdf";
-
-        document.body.appendChild(a);
-
-        a.click();
-
-        a.remove();
-
-
-      } else {
-
-        alert("Failed to generate and download the PDF report.");
-
-      }
-
-    });
-
-  </script>
-
-</body>
-
+    <script src="/script.js"></script>
+  </body>
 </html>

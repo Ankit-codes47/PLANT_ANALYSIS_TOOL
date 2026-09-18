@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PlantScan AI icon">
+  <title>PlantScan AI</title>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="32" cy="32" r="20.5" stroke="#168a5b" stroke-width="2.3"/>
+    <circle cx="32" cy="32" r="15.5" stroke="#bfead3" stroke-width="1.1" opacity="0.9"/>
+
+    <path d="M18 21h4v4M42 21h4v4M18 43h4v-4M42 43h4v-4" stroke="#168a5b" stroke-width="1.8"/>
+
+    <path d="M22 41C25.2 30.2 31.8 24.3 42 22c-.8 9.7-7.2 17.3-20 19Z" fill="#1ea567"/>
+    <path d="M22 32h20" stroke="#eafff5" stroke-width="1.2" opacity="0.9"/>
+    <path d="M32 18v27" stroke="#ebfff4" stroke-width="1.2" opacity="0.82"/>
+
+    <path d="M20 32c4.1-1.6 8.2-4.2 11.9-8.2 3.4 3.8 7.4 6.8 11.8 8.2-4.4 1.5-8.5 4.5-11.8 8.5-3.7-4-7.8-6.9-11.9-8.5Z" fill="#2ccd77" opacity="0.95"/>
+
+    <path d="M32 20.5v23.2" stroke="#f3fff7" stroke-width="1" opacity="0.7"/>
+  </g>
+</svg>

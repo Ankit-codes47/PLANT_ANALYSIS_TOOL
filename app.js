@@ -6,138 +6,167 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const fsPromises = fs.promises;
 const path = require("path");
-const sharp = require("sharp");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 // ==========================================
-// CONFIGURE MULTER
-// Vercel allows temporary files inside /tmp
+// CONFIGURATION
 // ==========================================
 
-const uploadDir = "/tmp/upload";
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 const upload = multer({
-  dest: uploadDir,
+  dest: "upload/",
 });
 
 app.use(express.json({ limit: "10mb" }));
 
 // ==========================================
-// INITIALIZE GOOGLE GENERATIVE AI
+// GEMINI AI
 // ==========================================
 
-const genAI = new GoogleGenerativeAI(
-  process.env.GEMINI_API_KEY
-);
+if (!process.env.GEMINI_API_KEY) {
+  console.error("ERROR: GEMINI_API_KEY is not configured in .env");
+}
 
-// ==========================================
-// SERVE FRONTEND
-// ==========================================
-
-app.get("/", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "public", "index.html")
-  );
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
+
+// ==========================================
+// STATIC FRONTEND
+// ==========================================
+
+app.use(express.static("public"));
 
 // ==========================================
 // ANALYZE PLANT
 // ==========================================
 
-app.post(
-  "/analyze",
-  upload.single("image"),
-  async (req, res) => {
-    let imagePath = null;
+app.post("/analyze", upload.single("image"), async (req, res) => {
+  let imagePath = null;
 
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          error: "No image file uploaded",
-        });
-      }
-
-      imagePath = req.file.path;
-
-      // Read image
-      const imageData = await fsPromises.readFile(
-        imagePath,
-        {
-          encoding: "base64",
-        }
-      );
-
-      // Gemini model
-      const model = genAI.getGenerativeModel({
-        model: "gemini-3.8-flash",
-      });
-
-      // Analyze image
-      const result = await model.generateContent([
-        "Analyze this plant image and provide detailed analysis of its species, health, and care recommendations, its characteristics, care instructions, and any interesting facts. Please provide the response in plain text without using any markdown formatting.",
-
-        {
-          inlineData: {
-            mimeType: req.file.mimetype,
-            data: imageData,
-          },
-        },
-      ]);
-
-      const plantInfo = result.response.text();
-
-      // Delete temporary uploaded image
-      try {
-        await fsPromises.unlink(imagePath);
-        imagePath = null;
-      } catch (deleteError) {
-        console.error(
-          "Error deleting uploaded image:",
-          deleteError
-        );
-      }
-
-      // Send result
-      res.json({
-        result: plantInfo,
-        image: `data:${req.file.mimetype};base64,${imageData}`,
-      });
-
-    } catch (error) {
-      console.error(
-        "Error analyzing image:",
-        error
-      );
-
-      // Cleanup image if it still exists
-      if (imagePath) {
-        try {
-          await fsPromises.unlink(imagePath);
-        } catch (deleteError) {
-          console.error(
-            "Error deleting temporary image:",
-            deleteError
-          );
-        }
-      }
-
-      res.status(500).json({
-        error:
-          "An error occurred while analyzing the image",
+  try {
+    // Check image
+    if (!req.file) {
+      return res.status(400).json({
+        error: "No image file uploaded",
       });
     }
+
+    imagePath = req.file.path;
+
+    // Read uploaded image
+    const imageData = await fsPromises.readFile(imagePath, {
+      encoding: "base64",
+    });
+
+    // ==========================================
+    // GEMINI ANALYSIS
+    // ==========================================
+
+    const result = await genAI.models.generateContent({
+      model: "gemini-3.8-flash",
+
+      config: {
+        thinkingConfig: {
+          thinkingLevel: "low",
+        },
+      },
+
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `
+Analyze this plant image carefully.
+
+Provide a detailed plant analysis containing:
+
+1. Plant Species / Identification
+2. Plant Health
+3. Physical Characteristics
+4. Care Instructions
+5. Watering Requirements
+6. Sunlight Requirements
+7. Soil Requirements
+8. Temperature and Humidity
+9. Common Problems or Diseases
+10. Recommendations
+11. Interesting Facts
+
+Important instructions:
+
+- Base the analysis only on what can reasonably be observed or inferred from the image.
+- If exact species identification is uncertain, clearly mention that it is an identification estimate.
+- Do not claim 100% identification accuracy.
+- Do not invent visible symptoms.
+- Give practical and understandable care recommendations.
+- Mention uncertainty when appropriate.
+- Return plain text only.
+- Do not use Markdown.
+- Do not use emojis.
+      `,
+            },
+
+            {
+              inlineData: {
+                mimeType: req.file.mimetype,
+                data: imageData,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    // Get AI response
+    const plantInfo = result.text;
+
+    if (!plantInfo || !plantInfo.trim()) {
+      throw new Error("Gemini returned an empty response.");
+    }
+
+    // ==========================================
+    // DELETE TEMPORARY UPLOAD
+    // ==========================================
+
+    await fsPromises.unlink(imagePath);
+    imagePath = null;
+
+    // ==========================================
+    // SEND RESPONSE TO FRONTEND
+    // ==========================================
+
+    res.json({
+      result: plantInfo,
+      image: `data:${req.file.mimetype};base64,${imageData}`,
+    });
+  } catch (error) {
+    console.error("=================================");
+    console.error("ERROR ANALYZING PLANT");
+    console.error("=================================");
+    console.error(error);
+    console.error("=================================");
+
+    // Try to remove temporary uploaded file
+    if (imagePath) {
+      try {
+        await fsPromises.unlink(imagePath);
+      } catch (cleanupError) {
+        console.error("Could not remove temporary file:", cleanupError);
+      }
+    }
+
+    res.status(500).json({
+      error: "An error occurred while analyzing the image.",
+    });
   }
-);
+});
 
 // ==========================================
-// DOWNLOAD PDF
+// DOWNLOAD PDF REPORT
 // ==========================================
 
 app.post("/download", async (req, res) => {
@@ -146,17 +175,26 @@ app.post("/download", async (req, res) => {
   try {
     if (!result) {
       return res.status(400).json({
-        error: "No analysis result available",
+        error: "Analysis result is missing.",
       });
     }
 
-    const reportsDir = "/tmp/reports";
+    // ==========================================
+    // REPORT DIRECTORY
+    // ==========================================
+
+    const reportsDir = path.join(__dirname, "reports");
 
     await fsPromises.mkdir(reportsDir, {
       recursive: true,
     });
 
+    // ==========================================
+    // PDF FILE
+    // ==========================================
+
     const filename = `plant_analysis_report_${Date.now()}.pdf`;
+
     const filePath = path.join(reportsDir, filename);
 
     const writeStream = fs.createWriteStream(filePath);
@@ -167,225 +205,146 @@ app.post("/download", async (req, res) => {
 
     doc.pipe(writeStream);
 
-    // =========================
-    // TITLE
-    // =========================
+    // ==========================================
+    // PDF HEADER
+    // ==========================================
 
-    doc.fontSize(24).text("Plant Analysis Report", {
-      align: "center",
-    });
+    doc
+      .fontSize(24)
+      .font("Helvetica-Bold")
+      .text("Plant Analysis Report", {
+        align: "center",
+      });
 
     doc.moveDown();
 
-    doc.fontSize(12).text(
-      `Date: ${new Date().toLocaleDateString()}`
-    );
+    doc
+      .fontSize(11)
+      .font("Helvetica")
+      .text(`Date: ${new Date().toLocaleDateString()}`, {
+        align: "center",
+      });
 
     doc.moveDown(2);
 
-    // =========================
-    // ANALYSIS
-    // =========================
-
-    doc.fontSize(14).text(result, {
-      align: "left",
-      lineGap: 5,
-    });
-
-    // =========================
+    // ==========================================
     // PLANT IMAGE
-    // =========================
+    // ==========================================
 
     if (image) {
       try {
-        console.log("Processing plant image...");
-
-        // Check data URL
-        if (!image.startsWith("data:image/")) {
-          throw new Error("Invalid image data URL");
-        }
-
-        // Extract base64 image
-        const base64Data = image.split(",")[1];
-
-        if (!base64Data) {
-          throw new Error("Base64 image data is missing");
-        }
-
-        const imageBuffer = Buffer.from(
-          base64Data,
-          "base64"
+        const base64Data = image.replace(
+          /^data:image\/\w+;base64,/,
+          ""
         );
 
-        console.log(
-          "Original image size:",
-          imageBuffer.length,
-          "bytes"
-        );
+        const buffer = Buffer.from(base64Data, "base64");
 
-        // Convert ANY supported image format to PNG
-        const pngBuffer = await sharp(imageBuffer)
-          .rotate()
-          .png()
-          .toBuffer();
-
-        console.log(
-          "PNG conversion successful:",
-          pngBuffer.length,
-          "bytes"
-        );
-
-        // New page for image
-        doc.addPage();
-
-        doc.fontSize(20).text("Plant Image", {
-          align: "center",
-        });
-
-        doc.moveDown(2);
-
-        // Add image
-        doc.image(pngBuffer, {
-          fit: [450, 500],
+        doc.image(buffer, {
+          fit: [450, 280],
           align: "center",
           valign: "center",
         });
 
-        console.log(
-          "Plant image successfully added to PDF"
-        );
-
-      } catch (imageError) {
-        console.error(
-          "PLANT IMAGE ERROR:",
-          imageError
-        );
-
-        doc.addPage();
-
-        doc.fontSize(16).text(
-          "Plant Image",
-          {
-            align: "center",
-          }
-        );
-
         doc.moveDown(2);
-
-        doc.fontSize(12).text(
-          "Unable to add the plant image to this report.",
-          {
-            align: "center",
-          }
-        );
+      } catch (imageError) {
+        console.error("Could not insert image into PDF:", imageError);
       }
     }
+
+    // ==========================================
+    // ANALYSIS
+    // ==========================================
+
+    doc
+      .fontSize(16)
+      .font("Helvetica-Bold")
+      .text("Plant Analysis");
+
+    doc.moveDown();
+
+    doc
+      .fontSize(11)
+      .font("Helvetica")
+      .text(result, {
+        align: "left",
+        lineGap: 4,
+      });
+
+    // ==========================================
+    // FOOTER
+    // ==========================================
+
+    doc.moveDown(3);
+
+    doc
+      .fontSize(9)
+      .fillColor("#666666")
+      .text(
+        "Generated by PlantScan AI",
+        {
+          align: "center",
+        }
+      );
 
     // Finish PDF
     doc.end();
 
-    // Wait for PDF creation
+    // ==========================================
+    // WAIT FOR PDF
+    // ==========================================
+
     await new Promise((resolve, reject) => {
       writeStream.on("finish", resolve);
       writeStream.on("error", reject);
     });
 
-    console.log(
-      "PDF created successfully:",
-      filePath
-    );
+    // ==========================================
+    // DOWNLOAD PDF
+    // ==========================================
 
-    // Download PDF
-    res.download(
-      filePath,
-      "Plant_Analysis_Report.pdf",
-      async (err) => {
-        if (err) {
-          console.error(
-            "PDF download error:",
-            err
-          );
+    res.download(filePath, filename, async (err) => {
+      if (err) {
+        console.error("PDF download error:", err);
 
-          if (!res.headersSent) {
-            res.status(500).json({
-              error: "Error downloading PDF",
-            });
-          }
-
-          return;
-        }
-
-        console.log(
-          "PDF downloaded successfully"
-        );
-
-        // Delete temporary PDF
-        try {
-          await fsPromises.unlink(filePath);
-
-          console.log(
-            "Temporary PDF deleted"
-          );
-        } catch (deleteError) {
-          console.error(
-            "Error deleting PDF:",
-            deleteError
-          );
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: "Error downloading the PDF report",
+          });
         }
       }
-    );
 
+      // Delete temporary PDF
+      try {
+        await fsPromises.unlink(filePath);
+      } catch (deleteError) {
+        console.error(
+          "Could not delete temporary PDF:",
+          deleteError
+        );
+      }
+    });
   } catch (error) {
-    console.error(
-      "PDF generation error:",
-      error
-    );
+    console.error("=================================");
+    console.error("ERROR GENERATING PDF");
+    console.error("=================================");
+    console.error(error);
+    console.error("=================================");
 
-    if (!res.headersSent) {
-      res.status(500).json({
-        error:
-          "An error occurred while generating the PDF",
-      });
-    }
+    res.status(500).json({
+      error: "An error occurred while generating the PDF report.",
+    });
   }
 });
 
 // ==========================================
-// HEALTH CHECK
+// START SERVER
 // ==========================================
 
-app.get("/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "PlantScan API is running successfully.",
-  });
+app.listen(port, () => {
+  console.log("=================================");
+  console.log(`PlantScan server running on port ${port}`);
+  console.log(`http://localhost:${port}`);
+  console.log("Gemini model: gemini-3.8-flash");
+  console.log("=================================");
 });
-
-// ==========================================
-// 404 ROUTE
-// ==========================================
-
-app.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found",
-  });
-});
-
-// ==========================================
-// LOCAL SERVER
-// ==========================================
-
-// Only start server when running locally
-if (process.env.NODE_ENV !== "production") {
-  app.listen(port, () => {
-    console.log(
-      `Listening on port ${port}`
-    );
-  });
-}
-
-// ==========================================
-// EXPORT APP FOR VERCEL
-// ==========================================
-
-module.exports = app;
